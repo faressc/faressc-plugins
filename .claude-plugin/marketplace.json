@@ -1,0 +1,14 @@
+{
+  "name": "faressc-plugins",
+  "owner": { "name": "faressc" },
+  "metadata": {
+    "description": "Fares Schulz's personal Claude Code plugins (machine-level MCP servers and skills)"
+  },
+  "plugins": [
+    {
+      "name": "faressc-llm-plugin",
+      "source": "./plugins/faressc-llm-plugin",
+      "description": "Fares's personal MCP servers (Zotero, computer-use-linux) and the Linux computer-control skill"
+    }
+  ]
+}

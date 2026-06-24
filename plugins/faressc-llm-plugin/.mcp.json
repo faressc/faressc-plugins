@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "${HOME}/.local/bin/zotero-mcp",
+      "env": { "ZOTERO_LOCAL": "true" }
+    },
+    "computer-use-linux": {
+      "command": "${HOME}/.cargo/bin/computer-use-linux",
+      "args": ["mcp"]
+    }
+  }
+}

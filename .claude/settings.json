@@ -1,0 +1,6 @@
+{
+  "extraKnownMarketplaces": {
+    "faressc-plugins": { "source": { "source": "github", "repo": "faressc/faressc-plugins" } }
+  },
+  "enabledPlugins": { "faressc-llm-plugin@faressc-plugins": true }
+}

@@ -1,0 +1,5 @@
+# Claude Code personal/local overrides
+.claude/settings.local.json
+
+# OS
+.DS_Store
