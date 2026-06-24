@@ -18,7 +18,9 @@ my own machine-level tooling rather than shared lab config.
     static manifest can't gate on OS, so on macOS the binary simply won't be found
     and the server fails to start (harmless noise). Prereqs are not provisioned by
     the plugin — still need `cargo install computer-use-linux`, the `/dev/uinput`
-    udev rule, the `ydotoold` user service, and `computer-use-linux setup`.
+    udev rule, the `ydotoold` user service, and `computer-use-linux setup` for
+    AT-SPI. Full setup guide:
+    `~/tubcloud.tu-berlin.de/memory-bridge/guides/computer-use-linux-mcp.md`.
 - **`skills/control-fares-linux-computer`** — how to drive this machine through the
   `computer-use-linux` MCP (Ctrl/Super are swapped at the xkb level, Hyprland
   keybinds, monitor layout).
