@@ -10,7 +10,7 @@
     },
     "github-anira": {
       "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
+      "url": "https://api.githubcopilot.com/mcp/?variant=anira",
       "headers": {
         "Authorization": "Bearer ${GITHUB_TOKEN_ANIRA}"
       }
