@@ -1,6 +1,6 @@
 {
   "name": "faressc-llm-plugin",
-  "version": "0.2.0",
-  "description": "Fares's personal Claude Code tooling: Zotero, Linux computer-use, and anira-project GitHub MCP servers and the control-fares-linux-computer skill",
+  "version": "0.3.0",
+  "description": "Fares's personal Claude Code tooling: Zotero, Linux computer-use, and anira-project / tanh-lab GitHub MCP servers and the control-fares-linux-computer skill",
   "author": { "name": "Fares Schulz" }
 }
