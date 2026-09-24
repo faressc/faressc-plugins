@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/dotfiles-pull.sh\"",
+            "timeout": 30,
+            "statusMessage": "Pulling the dotfiles (plans, memory)\u2026"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/dotfiles-push.sh\"",
+            "timeout": 100
+          }
+        ]
+      }
+    ]
+  }
+}
