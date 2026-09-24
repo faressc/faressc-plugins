@@ -36,10 +36,16 @@ my own machine-level tooling rather than shared lab config.
     lock, 20 s bound. Prints one line only when new commits arrived (SessionStart stdout
     goes into the context); any problem is one stderr line and exit 0.
   - `dotfiles-push.sh` (**SessionEnd**): stages only `claude/.claude/plans` and
-    `claude/.claude/projects/*/memory`, commits them with a host-and-time message, then
-    `pull --rebase --autostash` and `push`. Nothing else in the working tree is touched;
-    a commit that cannot be pushed (offline) stays local and goes out next time; a rebase
-    conflict is aborted and left for a human. Always exit 0.
+    `claude/.claude/projects/*/memory` and commits them with a host-and-time message in
+    the foreground (milliseconds), then hands the network half (fetch, rebase onto
+    upstream, push) to a detached copy of itself (`setsid -f`): Claude Code cancels a
+    SessionEnd hook that is still running when the process exits ("Hook cancelled"), and
+    a fetch and a push are seconds of network time. Nothing else in the working tree is
+    touched; a commit that cannot be pushed (offline) stays local and goes out next time;
+    a rebase conflict is aborted and left for a human. Always exit 0.
+  - Both write one line per step to `~/.claude/dotfiles-sync.log` (`$CLAUDE_DOTFILES_SYNC_LOG`):
+    `pull up to date at <sha>` / `pull pulled a..b`, `push committed <sha>; pushing detached`,
+    `push detached: pushed <sha>` or the reason it did not. That log is how to check the hooks run.
   Prereqs on each machine: the dotfiles cloned with a pushable remote (SSH key for
   GitHub), a git identity, `flock` and `timeout` (util-linux / coreutils). The `.gitignore`
   line `claude/.claude/projects/**/*.jsonl` in the dotfiles keeps session transcripts out

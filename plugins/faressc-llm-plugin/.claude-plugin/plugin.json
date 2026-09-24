@@ -1,6 +1,6 @@
 {
   "name": "faressc-llm-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Fares's personal Claude Code tooling: Zotero, Linux computer-use, the anira-project / tanh-lab GitHub MCP servers, the control-fares-linux-computer skill, and the session hooks that sync ~/.claude plans and memory through the dotfiles repo",
   "author": {
     "name": "Fares Schulz"
