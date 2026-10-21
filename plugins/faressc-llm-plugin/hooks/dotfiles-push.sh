@@ -1,44 +1,43 @@
 #!/usr/bin/env bash
 # SessionEnd hook: commit what this session wrote under the paths the `claude` stow
-# package syncs (the plan files, every project's memory directory) and push.
+# package syncs (the plan files, every project's memory directory) and push. opencode
+# runs it too, through the dotfiles' claude-bridge plugin, when a session goes idle.
 #
 # Two halves. The foreground half stages and commits, which takes milliseconds, and
 # returns: Claude Code cancels a SessionEnd hook that is still running when the process
 # exits ("Hook cancelled"), and a fetch and a push are seconds of network time. So the
-# network half runs detached, in its own session (setsid), where the cancel cannot reach
-# it: fetch, rebase onto upstream, push, and one log line for the result. Only the synced
-# paths are ever staged; a commit that cannot be pushed stays local and goes out with the
-# next session's end. Every path exits 0: a session never fails on the sync.
-#
-# --wait runs the network half in this process instead, for callers that are not cancelled
-# but that end the detached half with themselves: a systemd service (the dotfiles'
-# agent-sync timer, which syncs for opencode, whose sessions have no end hook) kills every
-# process left in its cgroup when the main one exits.
+# network half runs detached, in its own process group (job control on), where the
+# cancel cannot reach it: fetch, rebase onto upstream, push, and one log line for the
+# result. Only the synced paths are ever staged; a commit that cannot be pushed stays
+# local and goes out with the next session's end. Every path exits 0: a session never
+# fails on the sync.
 #
 # Nothing is committed while a rebase, merge, cherry-pick or revert is in progress in the
 # dotfiles checkout: that would land on whatever HEAD is mid-operation.
+#
+# Runs on Linux and macOS (bash 3.2, BSD userland): see sync-lib.sh.
 set -u
 hooks="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="${CLAUDE_DOTFILES_DIR:-$HOME/.dotfiles}"
 log="${CLAUDE_DOTFILES_SYNC_LOG:-$HOME/.claude/dotfiles-sync.log}"   # one line per step: the audit trail
 note() { printf '%s push %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >>"$log" 2>/dev/null || true; }
+. "$hooks/sync-lib.sh"
 [ -d "$repo/.git" ] || { note "no repo at $repo"; exit 0; }
 cd "$repo" || exit 0
 
 if [ "${1:-}" = "--detached" ]; then
-    # ---- the network half, in its own session ----
-    exec 9>"$repo/.git/claude-sync.lock"
-    flock -w 60 9 || { note "detached: skipped, lock held for 60 s"; exit 0; }
+    # ---- the network half, in its own process group ----
+    sync_lock 60 || { note "detached: skipped, lock held for 60 s"; exit 0; }
     upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || { note "detached: no upstream"; exit 0; }
     [ -n "$(git rev-list "$upstream"..HEAD 2>/dev/null)" ] || { note "detached: nothing to push"; exit 0; }
-    if ! timeout 60 git fetch --quiet >/dev/null 2>&1; then
+    if ! with_timeout 60 git fetch --quiet >/dev/null 2>&1; then
         note "detached: fetch failed (offline?), retried at the next session end"; exit 0
     fi
     if ! git rebase --autostash --quiet "$upstream" >/dev/null 2>&1; then
         git rebase --abort >/dev/null 2>&1        # leave the tree as it was
         note "detached: rebase conflict with $upstream, left for a human"; exit 0
     fi
-    if timeout 60 git push --quiet >/dev/null 2>&1; then
+    if with_timeout 60 git push --quiet >/dev/null 2>&1; then
         note "detached: pushed $(git rev-parse --short HEAD)"
     else
         note "detached: push failed, retried at the next session end"
@@ -47,8 +46,7 @@ if [ "${1:-}" = "--detached" ]; then
 fi
 
 # ---- the foreground half: stage and commit, then hand over ----
-exec 9>"$repo/.git/claude-sync.lock"
-flock -w 30 9 || { note "skipped: lock held for 30 s"; exit 0; }
+sync_lock 30 || { note "skipped: lock held for 30 s"; exit 0; }
 git_dir=$(git rev-parse --git-dir 2>/dev/null) || { note "failed: git rev-parse"; exit 0; }
 for op in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
     [ -e "$git_dir/$op" ] && { note "skipped: $op in progress"; exit 0; }
@@ -77,11 +75,8 @@ if [ ${#changed[@]} -gt 0 ]; then
 fi
 upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || { note "$result; no upstream"; exit 0; }
 [ -n "$(git rev-list "$upstream"..HEAD 2>/dev/null)" ] || { note "$result; nothing to push"; exit 0; }
-exec 9>&-                                  # the network half takes its own lock
-if [ "${1:-}" = "--wait" ]; then
-    note "$result; pushing"
-    exec "$0" --detached
-fi
 note "$result; pushing detached"
-setsid -f "$0" --detached </dev/null >/dev/null 2>&1
+sync_unlock                                # the network half takes its own lock
+set -m                                     # its own process group, out of the cancel's reach
+nohup "$0" --detached </dev/null >/dev/null 2>&1 &
 exit 0

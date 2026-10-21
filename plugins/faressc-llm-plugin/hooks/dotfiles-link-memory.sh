@@ -14,11 +14,16 @@
 #     the index lines it lacks. A file on both sides with different content stops the
 #     merge for that project before anything moves; the log names the file, for a human.
 #
-# An empty local directory is left alone until it has a file. The exclude list is
+# An empty local directory is replaced by a link when the repo has a copy, and otherwise
+# left alone until it has a file. The exclude list is
 # claude/.claude/memory-sync-exclude in the dotfiles: one bash glob per line, matched
 # against <key>. Links are relative, the way stow makes them, so `stow -R claude` takes
 # them as its own. --dry-run prints what would happen and changes nothing. Every path
 # exits 0: a session never fails on the sync.
+#
+# Runs on Linux and macOS: bash 3.2 (no associative arrays; an empty array expands under
+# `set -u` only through ${a[@]+...}) and the BSD userland (no realpath --relative-to,
+# ln -T or mv -T).
 set -u
 repo="${CLAUDE_DOTFILES_DIR:-$HOME/.dotfiles}"
 log="${CLAUDE_DOTFILES_SYNC_LOG:-$HOME/.claude/dotfiles-sync.log}"   # one line per step: the audit trail
@@ -42,18 +47,33 @@ if [ -f "$exclude_file" ]; then
 fi
 excluded() {
     local pattern
-    for pattern in "${excludes[@]}"; do
+    for pattern in ${excludes[@]+"${excludes[@]}"}; do
         # shellcheck disable=SC2053  # unquoted on purpose: the pattern is a glob
         [[ $1 == $pattern ]] && return 0
     done
     return 1
 }
 
-# link <key>: point the local memory path at the package copy, relative like stow.
+# relpath <from-dir> <to>: <to> as a path relative to <from-dir>; both absolute and
+# physical (pwd -P), so plain string prefixes decide it.
+relpath() {
+    local from=$1 up=""
+    while [ "${2#"$from"/}" = "$2" ]; do
+        from=${from%/*}
+        up="../$up"
+    done
+    printf '%s%s' "$up" "${2#"$from"/}"
+}
+
+# link <key>: point the local memory path, which must not exist, at the package copy,
+# relative like stow.
 link() {
-    local target
-    target=$(realpath -m --relative-to="$projects/$1" "$package/$1/memory")
-    mkdir -p "$projects/$1" && ln -sT "$target" "$projects/$1/memory"
+    local from to
+    mkdir -p "$projects/$1" || return 1
+    from=$(cd "$projects/$1" && pwd -P) || return 1
+    to=$(cd "$package/$1/memory" && pwd -P) || return 1
+    if [ -e "$projects/$1/memory" ] || [ -L "$projects/$1/memory" ]; then return 1; fi
+    ln -s "$(relpath "$from" "$to")" "$projects/$1/memory"
 }
 
 # conflicts <here> <there>: print the first local entry that cannot be merged into the
@@ -90,15 +110,17 @@ merge() {
     rmdir "$1"
 }
 
-# Every key with a memory directory (or link) on either side.
-declare -A keys=()
-for dir in "$projects"/*/memory "$package"/*/memory; do
-    [ -e "$dir" ] || [ -L "$dir" ] || continue
-    key=${dir%/memory}
-    keys[${key##*/}]=1
-done
+# Every key with a memory directory (or link) on either side, once.
+keys=$(
+    for dir in "$projects"/*/memory "$package"/*/memory; do
+        [ -e "$dir" ] || [ -L "$dir" ] || continue
+        key=${dir%/memory}
+        printf '%s\n' "${key##*/}"
+    done | sort -u
+)
 
-for key in "${!keys[@]}"; do
+while IFS= read -r key <&3; do
+    [ -n "$key" ] || continue
     excluded "$key" && continue
     here="$projects/$key/memory"
     there="$package/$key/memory"
@@ -111,10 +133,15 @@ for key in "${!keys[@]}"; do
         continue
     fi
     [ -d "$here" ] || { note "$key: memory is not a directory, skipped"; continue; }
-    [ -n "$(find "$here" -mindepth 1 -print -quit)" ] || continue   # empty: nothing yet
+    if [ -z "$(find "$here" -mindepth 1 -print -quit)" ]; then
+        [ -d "$there" ] || continue                 # empty, and nothing to link: nothing yet
+        if $dry; then note "$key: would link the repo copy over an empty directory"; continue; fi
+        if rmdir "$here" && link "$key"; then note "$key: linked the repo copy"; else note "$key: link failed"; fi
+        continue
+    fi
     if [ ! -e "$there" ]; then
         if $dry; then note "$key: would adopt"; continue; fi
-        if mkdir -p "$package/$key" && mv -T "$here" "$there" && link "$key"; then
+        if mkdir -p "$package/$key" && mv "$here" "$there" && link "$key"; then
             note "$key: adopted"
         else
             note "$key: adopt failed"
@@ -132,5 +159,7 @@ for key in "${!keys[@]}"; do
     else
         note "$key: merge failed"
     fi
-done
+done 3<<EOF
+$keys
+EOF
 exit 0

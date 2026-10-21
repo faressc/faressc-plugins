@@ -27,7 +27,11 @@ my own machine-level tooling rather than shared lab config.
 
 - **`hooks/`** — two session hooks that keep `~/.claude/plans` and every
   `~/.claude/projects/<key>/memory` in sync between machines through the dotfiles repo
-  (`~/.dotfiles`, or `$CLAUDE_DOTFILES_DIR`). Both are *directory* links into the
+  (`~/.dotfiles`, or `$CLAUDE_DOTFILES_DIR`). opencode runs the same hooks through the
+  dotfiles' `claude-bridge` plugin (SessionEnd once a session has been idle for 10
+  minutes). They run on Linux and macOS: bash 3.2 and the BSD userland, so no `flock`,
+  `setsid`, `timeout` or GNU-only flags; `sync-lib.sh` has the lock (a directory, since
+  `mkdir` is atomic everywhere) and the timeout they share. Both are *directory* links into the
   `claude` package, so whatever a session writes there lands in the repo by itself:
   `~/.claude/plans` is stowed, the memory directories are linked by the hooks (below).
   On a fresh machine `mkdir -p ~/.claude/projects` **before** `stow claude`, or stow folds
@@ -45,25 +49,24 @@ my own machine-level tooling rather than shared lab config.
     `MEMORY.md` gets the missing index lines; a file that differs on the two sides stops
     that project's merge and is logged for a human). Globs in
     `claude/.claude/memory-sync-exclude` in the dotfiles, matched against `<key>`, are
-    never adopted. `--dry-run` prints what it would do; to run it for real by hand, take
-    the lock: `flock ~/.dotfiles/.git/claude-sync.lock <hooks>/dotfiles-link-memory.sh`.
+    never adopted. An empty local directory is replaced by a link when the repo has a
+    copy. `--dry-run` prints what it would do; a real run by hand must not overlap a
+    session's start or end (it takes no lock of its own).
   - `dotfiles-push.sh` (**SessionEnd**): runs `dotfiles-link-memory.sh`, then stages only
     `claude/.claude/plans` and `claude/.claude/projects/*/memory` and commits them with a
     host-and-time message in the foreground (milliseconds), then hands the network half
-    (fetch, rebase onto upstream, push) to a detached copy of itself (`setsid -f`): Claude
-    Code cancels a SessionEnd hook that is still running when the process exits ("Hook
-    cancelled"), and a fetch and a push are seconds of network time. Nothing else in the
-    working tree is touched; nothing is committed while a rebase, merge, cherry-pick or
-    revert is in progress; a commit that cannot be pushed (offline) stays local and goes
-    out next time; a rebase conflict is aborted and left for a human. Always exit 0.
-    `--wait` runs the network half in-process instead, for the dotfiles' `agent-sync`
-    systemd timer (a service kills a detached child when it exits), which pushes for
-    opencode, whose sessions have no end hook.
+    (fetch, rebase onto upstream, push) to a detached copy of itself in its own process
+    group (`set -m`, `nohup`): Claude Code cancels a SessionEnd hook that is still running
+    when the process exits ("Hook cancelled"), and a fetch and a push are seconds of
+    network time. Nothing else in the working tree is touched; nothing is committed while
+    a rebase, merge, cherry-pick or revert is in progress; a commit that cannot be pushed
+    (offline) stays local and goes out next time; a rebase conflict is aborted and left
+    for a human. Always exit 0.
   - Both write one line per step to `~/.claude/dotfiles-sync.log` (`$CLAUDE_DOTFILES_SYNC_LOG`):
     `pull up to date at <sha>` / `pull pulled a..b`, `push committed <sha>; pushing detached`,
     `push detached: pushed <sha>` or the reason it did not. That log is how to check the hooks run.
   Prereqs on each machine: the dotfiles cloned with a pushable remote (SSH key for
-  GitHub), a git identity, `flock` and `timeout` (util-linux / coreutils). The `.gitignore`
+  GitHub), a git identity, bash (3.2 is enough) and git. The `.gitignore`
   line `claude/.claude/projects/**/*.jsonl` in the dotfiles keeps session transcripts out
   should stow ever fold too high.
 
