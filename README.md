@@ -48,14 +48,17 @@ my own machine-level tooling rather than shared lab config.
     never adopted. `--dry-run` prints what it would do; to run it for real by hand, take
     the lock: `flock ~/.dotfiles/.git/claude-sync.lock <hooks>/dotfiles-link-memory.sh`.
   - `dotfiles-push.sh` (**SessionEnd**): runs `dotfiles-link-memory.sh`, then stages only
-    `claude/.claude/plans` and
-    `claude/.claude/projects/*/memory` and commits them with a host-and-time message in
-    the foreground (milliseconds), then hands the network half (fetch, rebase onto
-    upstream, push) to a detached copy of itself (`setsid -f`): Claude Code cancels a
-    SessionEnd hook that is still running when the process exits ("Hook cancelled"), and
-    a fetch and a push are seconds of network time. Nothing else in the working tree is
-    touched; a commit that cannot be pushed (offline) stays local and goes out next time;
-    a rebase conflict is aborted and left for a human. Always exit 0.
+    `claude/.claude/plans` and `claude/.claude/projects/*/memory` and commits them with a
+    host-and-time message in the foreground (milliseconds), then hands the network half
+    (fetch, rebase onto upstream, push) to a detached copy of itself (`setsid -f`): Claude
+    Code cancels a SessionEnd hook that is still running when the process exits ("Hook
+    cancelled"), and a fetch and a push are seconds of network time. Nothing else in the
+    working tree is touched; nothing is committed while a rebase, merge, cherry-pick or
+    revert is in progress; a commit that cannot be pushed (offline) stays local and goes
+    out next time; a rebase conflict is aborted and left for a human. Always exit 0.
+    `--wait` runs the network half in-process instead, for the dotfiles' `agent-sync`
+    systemd timer (a service kills a detached child when it exits), which pushes for
+    opencode, whose sessions have no end hook.
   - Both write one line per step to `~/.claude/dotfiles-sync.log` (`$CLAUDE_DOTFILES_SYNC_LOG`):
     `pull up to date at <sha>` / `pull pulled a..b`, `push committed <sha>; pushing detached`,
     `push detached: pushed <sha>` or the reason it did not. That log is how to check the hooks run.

@@ -9,6 +9,14 @@
 # it: fetch, rebase onto upstream, push, and one log line for the result. Only the synced
 # paths are ever staged; a commit that cannot be pushed stays local and goes out with the
 # next session's end. Every path exits 0: a session never fails on the sync.
+#
+# --wait runs the network half in this process instead, for callers that are not cancelled
+# but that end the detached half with themselves: a systemd service (the dotfiles'
+# agent-sync timer, which syncs for opencode, whose sessions have no end hook) kills every
+# process left in its cgroup when the main one exits.
+#
+# Nothing is committed while a rebase, merge, cherry-pick or revert is in progress in the
+# dotfiles checkout: that would land on whatever HEAD is mid-operation.
 set -u
 hooks="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="${CLAUDE_DOTFILES_DIR:-$HOME/.dotfiles}"
@@ -41,6 +49,10 @@ fi
 # ---- the foreground half: stage and commit, then hand over ----
 exec 9>"$repo/.git/claude-sync.lock"
 flock -w 30 9 || { note "skipped: lock held for 30 s"; exit 0; }
+git_dir=$(git rev-parse --git-dir 2>/dev/null) || { note "failed: git rev-parse"; exit 0; }
+for op in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+    [ -e "$git_dir/$op" ] && { note "skipped: $op in progress"; exit 0; }
+done
 "$hooks/dotfiles-link-memory.sh"            # memory directories created since the last run
 paths=()
 [ -d claude/.claude/plans ] && paths+=(claude/.claude/plans)
@@ -65,7 +77,11 @@ if [ ${#changed[@]} -gt 0 ]; then
 fi
 upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || { note "$result; no upstream"; exit 0; }
 [ -n "$(git rev-list "$upstream"..HEAD 2>/dev/null)" ] || { note "$result; nothing to push"; exit 0; }
+exec 9>&-                                  # the network half takes its own lock
+if [ "${1:-}" = "--wait" ]; then
+    note "$result; pushing"
+    exec "$0" --detached
+fi
 note "$result; pushing detached"
-exec 9>&-                                  # the child takes its own lock
 setsid -f "$0" --detached </dev/null >/dev/null 2>&1
 exit 0
