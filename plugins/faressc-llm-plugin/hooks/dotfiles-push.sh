@@ -10,6 +10,7 @@
 # paths are ever staged; a commit that cannot be pushed stays local and goes out with the
 # next session's end. Every path exits 0: a session never fails on the sync.
 set -u
+hooks="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="${CLAUDE_DOTFILES_DIR:-$HOME/.dotfiles}"
 log="${CLAUDE_DOTFILES_SYNC_LOG:-$HOME/.claude/dotfiles-sync.log}"   # one line per step: the audit trail
 note() { printf '%s push %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >>"$log" 2>/dev/null || true; }
@@ -40,6 +41,7 @@ fi
 # ---- the foreground half: stage and commit, then hand over ----
 exec 9>"$repo/.git/claude-sync.lock"
 flock -w 30 9 || { note "skipped: lock held for 30 s"; exit 0; }
+"$hooks/dotfiles-link-memory.sh"            # memory directories created since the last run
 paths=()
 [ -d claude/.claude/plans ] && paths+=(claude/.claude/plans)
 for d in claude/.claude/projects/*/memory; do

@@ -27,15 +27,28 @@ my own machine-level tooling rather than shared lab config.
 
 - **`hooks/`** — two session hooks that keep `~/.claude/plans` and every
   `~/.claude/projects/<key>/memory` in sync between machines through the dotfiles repo
-  (`~/.dotfiles`, or `$CLAUDE_DOTFILES_DIR`). Both directories are stowed from the
-  `claude` package as *directory* links (move the real directory into the package, then
-  `stow -R claude`; on a fresh machine `mkdir -p ~/.claude/projects/<key>` **before**
-  stowing, or stow folds the whole `projects` directory into the package), so whatever a
-  session writes there lands in the repo by itself.
-  - `dotfiles-pull.sh` (**SessionStart**): `git pull --ff-only` on the dotfiles, under a
-    lock, 20 s bound. Prints one line only when new commits arrived (SessionStart stdout
-    goes into the context); any problem is one stderr line and exit 0.
-  - `dotfiles-push.sh` (**SessionEnd**): stages only `claude/.claude/plans` and
+  (`~/.dotfiles`, or `$CLAUDE_DOTFILES_DIR`). Both are *directory* links into the
+  `claude` package, so whatever a session writes there lands in the repo by itself:
+  `~/.claude/plans` is stowed, the memory directories are linked by the hooks (below).
+  On a fresh machine `mkdir -p ~/.claude/projects` **before** `stow claude`, or stow folds
+  the whole `projects` directory into the package.
+  - `dotfiles-pull.sh` (**SessionStart**): `git -c pull.rebase=false pull --ff-only` on the
+    dotfiles, under a lock, 20 s bound (with `pull.rebase=true` in the repo config,
+    `--ff-only` alone refuses on any unstaged change in the checkout), then
+    `dotfiles-link-memory.sh`. Prints one line only when new commits arrived
+    (SessionStart stdout goes into the context); any problem is one stderr line and exit 0.
+  - `dotfiles-link-memory.sh` (run by both hooks, under their lock): Claude Code creates
+    each new project's `memory` as a plain directory, which nothing would sync. This moves
+    every plain one that has files into the package and leaves a relative link (the kind
+    stow makes); links the package copy on a machine that has none yet; and when both
+    exist, merges the local files in first (new files move, identical ones are dropped,
+    `MEMORY.md` gets the missing index lines; a file that differs on the two sides stops
+    that project's merge and is logged for a human). Globs in
+    `claude/.claude/memory-sync-exclude` in the dotfiles, matched against `<key>`, are
+    never adopted. `--dry-run` prints what it would do; to run it for real by hand, take
+    the lock: `flock ~/.dotfiles/.git/claude-sync.lock <hooks>/dotfiles-link-memory.sh`.
+  - `dotfiles-push.sh` (**SessionEnd**): runs `dotfiles-link-memory.sh`, then stages only
+    `claude/.claude/plans` and
     `claude/.claude/projects/*/memory` and commits them with a host-and-time message in
     the foreground (milliseconds), then hands the network half (fetch, rebase onto
     upstream, push) to a detached copy of itself (`setsid -f`): Claude Code cancels a
