@@ -38,6 +38,11 @@ modifier you inject is remapped before Hyprland and apps see it:
 | `alt`                                                           | Alt (unchanged)                  |
 | `shift`                                                         | Shift (unchanged)                |
 | plain keys, letters, `space`, `Return`, `Escape`, arrows, `Tab` | unchanged                        |
+| `caps_lock`                                                     | **Escape** on a tap, **Control** while held (keyd); `shift+caps_lock` is Caps Lock |
+
+keyd (`/etc/keyd/default.conf`) also grabs ydotool's virtual device and re-emits it through
+`keyd-virtual-keyboard`; the Ctrl↔Super swap still happens afterwards in xkb, so the
+inversion rule above is unchanged.
 
 **Rule of thumb: invert Ctrl↔Super in every injected chord.**
 
@@ -61,38 +66,50 @@ Some "app shortcuts" you try to send will instead hit a Hyprland Control-bind:
 - `super+space` → Control+Space → opens **wofi** (not an app Ctrl+Space).
 - `super+Tab` → Control+Tab → Hyprland `focuscurrentorlast` (switches window!) — you
   cannot send a plain app Ctrl+Tab this way; it gets eaten by the compositor.
+- `super+alt+space` → Control+Alt+Space → **Claude desktop Quick Entry** (a global
+  shortcut), not an app's Ctrl+Alt+Space.
 
-> Optional permanent fix (not applied): give the ydotool virtual keyboard its own
-> `device { name = <ydotool-device>; kb_options = }` block in hyprland.conf so the
-> swap is NOT applied to injected input. Find the name via `hyprctl devices`. Until
-> that exists, use the inversion table above.
+> Optional permanent fix (not applied): keyd grabs the ydotool device too
+> (`DEVICE: match … (ydotoold virtual device)` in `journalctl -u keyd`), so injected
+> keys reach Hyprland through `keyd-virtual-keyboard` like the physical ones, and a
+> Hyprland `device` block for `ydotoold-virtual-device` alone has no effect. It would
+> take both: exclude the device in keyd's `[ids]` (`-2333:6666`) and give it its own
+> `device { name = ydotoold-virtual-device; kb_options = }` block, so the swap isn't
+> applied to injected input. Until then, use the inversion table above.
 
 ## Hyprland keybind reference
 
 Mod vars: `$firstMod = Mod4 (Super)`, `$secondMod = Mod1 (Alt)`, `$thirdMod = Control`.
-The "inject" column already accounts for the swap.
+The "inject" column already accounts for the swap. The full scheme, including kitty
+(Alt), tmux and Neovim, is in `~/.dotfiles/KEYBINDINGS.md`; there are no arrow-key
+binds any more, directions are h j k l.
 
-| Action                     | Real bind                      | Inject via press_key                |
-| -------------------------- | ------------------------------ | ----------------------------------- |
-| App launcher (wofi)        | `Control + space`              | `super+space`                       |
-| Launch terminal (kitty)    | `Super + Return`               | `ctrl+Return`                       |
-| Launch Firefox             | `Super + W`                    | `ctrl+w`                            |
-| Launch Thunderbird         | `Super + M`                    | `ctrl+m`                            |
-| File manager (dolphin)     | `Super + E`                    | `ctrl+e`                            |
-| Close active window        | `Super + Q`                    | `ctrl+q`                            |
-| Toggle floating            | `Super + F`                    | `ctrl+f`                            |
-| Maximize / fullscreen      | `Super + Alt + Return`         | `ctrl+alt+Return`                   |
-| Unmaximize                 | `Super + Alt + Shift + Return` | `ctrl+alt+shift+Return`             |
-| Lock screen (hyprlock)     | `Super + L`                    | `ctrl+l`                            |
-| Logout menu (wlogout)      | `Super + Escape`               | `ctrl+Escape`                       |
-| Move focus                 | `Super + arrows`               | `ctrl+<arrow>`                      |
-| Switch to workspace N      | `Super + N`                    | `ctrl+<N>`                          |
-| Move window to workspace N | `Super + Shift + N`            | `ctrl+shift+<N>`                    |
-| Focus last window          | `Control + Tab`                | `super+Tab`                         |
-| Screenshot (area)          | `Super+Alt+Ctrl + period`      | runs `~/.local/bin/screenshot_area` |
+| Action                          | Real bind                    | Inject via press_key        |
+| ------------------------------- | ---------------------------- | --------------------------- |
+| App launcher (wofi)             | `Control + space`            | `super+space`               |
+| Launch terminal (kitty)         | `Super + Return`             | `ctrl+Return`               |
+| Terminal split right / below    | `Super + V` / `Super + S`    | `ctrl+v` / `ctrl+s`         |
+| Launch Firefox                  | `Super + W`                  | `ctrl+w`                    |
+| File manager (dolphin)          | `Super + E`                  | `ctrl+e`                    |
+| Close active window             | `Super + Q`                  | `ctrl+q`                    |
+| Toggle floating                 | `Super + F`                  | `ctrl+f`                    |
+| Maximize (toggle, keeps bar)    | `Super + Z`                  | `ctrl+z`                    |
+| True fullscreen (toggle)        | `Super + Ctrl + Z`           | `ctrl+super+z`              |
+| Lock screen (hyprlock)          | `Super + Ctrl + Q`           | `ctrl+super+q`              |
+| Logout menu (wlogout)           | `Super + Escape`             | `ctrl+Escape`               |
+| Move focus                      | `Super + h j k l`            | `ctrl+h` … `ctrl+l`         |
+| Swap window                     | `Super + Shift + h j k l`    | `ctrl+shift+h` …            |
+| Previous / next workspace       | `Super + Ctrl + h / l`       | `ctrl+super+h` / `…+l`      |
+| Focus monitor left/down/up/right | `Super + Ctrl + Alt + h j k l` | `ctrl+super+alt+h` …      |
+| Switch to workspace N           | `Super + N`                  | `ctrl+<N>`                  |
+| Move window to workspace N      | `Super + Shift + N`          | `ctrl+shift+<N>`            |
+| Focus last window               | `Control + Tab`              | `super+Tab`                 |
+| Keybinding cheatsheet (toggle)  | `Super + /`                  | `ctrl+slash`                |
+| Screenshot (area)               | `Super + Ctrl + Alt + period` | `ctrl+super+alt+period`    |
 
-Special workspaces (scratchpads): `Super+A` magic, `Super+S` spotify, `Super+D` qpwgraph
-→ inject `ctrl+a` / `ctrl+s` / `ctrl+d`.
+Special workspaces (scratchpads): `Super+A` magic, `Super+B` spotify, `Super+D` qpwgraph,
+`Super+X` claudecode, `Super+G` claudedesktop, `Super+M` mail (Thunderbird)
+→ inject `ctrl+a` / `ctrl+b` / `ctrl+d` / `ctrl+x` / `ctrl+g` / `ctrl+m`.
 
 Prefer launching apps with `hyprctl dispatch exec <app>` only if the user is fine with
 shell use; otherwise use the wofi or direct-launch binds above through `press_key`.
