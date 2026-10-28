@@ -51,7 +51,7 @@ git_dir=$(git rev-parse --git-dir 2>/dev/null) || { note "failed: git rev-parse"
 for op in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
     [ -e "$git_dir/$op" ] && { note "skipped: $op in progress"; exit 0; }
 done
-"$hooks/dotfiles-link-memory.sh"            # memory directories created since the last run
+"$hooks/dotfiles-link.sh"                   # plans and memory directories not linked yet
 paths=()
 [ -d claude/.claude/plans ] && paths+=(claude/.claude/plans)
 for d in claude/.claude/projects/*/memory; do

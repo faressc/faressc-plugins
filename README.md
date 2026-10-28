@@ -35,24 +35,30 @@ my own machine-level tooling rather than shared lab config.
   `claude` package, so whatever a session writes there lands in the repo by itself:
   `~/.claude/plans` is stowed, the memory directories are linked by the hooks (below).
   On a fresh machine `mkdir -p ~/.claude/projects` **before** `stow claude`, or stow folds
-  the whole `projects` directory into the package.
+  the whole `projects` directory into the package. Stow folds `~/.claude/plans` only when
+  nothing is there yet; over an existing directory (or with `--adopt`) it links entry by
+  entry, and `dotfiles-link.sh` folds that directory at the next session start.
   - `dotfiles-pull.sh` (**SessionStart**): `git -c pull.rebase=false pull --ff-only` on the
     dotfiles, under a lock, 20 s bound (with `pull.rebase=true` in the repo config,
     `--ff-only` alone refuses on any unstaged change in the checkout), then
-    `dotfiles-link-memory.sh`. Prints one line only when new commits arrived
+    `dotfiles-link.sh`. Prints one line only when new commits arrived
     (SessionStart stdout goes into the context); any problem is one stderr line and exit 0.
-  - `dotfiles-link-memory.sh` (run by both hooks, under their lock): Claude Code creates
-    each new project's `memory` as a plain directory, which nothing would sync. This moves
-    every plain one that has files into the package and leaves a relative link (the kind
-    stow makes); links the package copy on a machine that has none yet; and when both
-    exist, merges the local files in first (new files move, identical ones are dropped,
-    `MEMORY.md` gets the missing index lines; a file that differs on the two sides stops
-    that project's merge and is logged for a human). Globs in
+  - `dotfiles-link.sh` (run by both hooks, under their lock): Claude Code creates each new
+    project's `memory` as a plain directory, which nothing would sync, and a
+    `~/.claude/plans` that stow linked entry by entry keeps every new plan as a plain file.
+    For `~/.claude/plans` and every memory directory this moves a plain one that has files
+    into the package and leaves a relative link (the kind stow makes); links the package
+    copy on a machine that has none yet; and when both exist, merges the local entries in
+    first (stow's per-entry links into the package are dropped, also dangling ones; new
+    files and directories move, identical ones are dropped, `MEMORY.md` gets the missing
+    index lines; an entry that differs on the two sides, or a link pointing anywhere else,
+    stops that directory's merge and is logged for a human). Globs in
     `claude/.claude/memory-sync-exclude` in the dotfiles, matched against `<key>`, are
-    never adopted. An empty local directory is replaced by a link when the repo has a
-    copy. `--dry-run` prints what it would do; a real run by hand must not overlap a
-    session's start or end (it takes no lock of its own).
-  - `dotfiles-push.sh` (**SessionEnd**): runs `dotfiles-link-memory.sh`, then stages only
+    never adopted, and neither is a directory holding links. An empty local directory is
+    replaced by a link when the repo has a copy. `--dry-run` prints what it would do; a
+    real run by hand must not overlap a session's start or end (it takes no lock of its
+    own).
+  - `dotfiles-push.sh` (**SessionEnd**): runs `dotfiles-link.sh`, then stages only
     `claude/.claude/plans` and `claude/.claude/projects/*/memory` and commits them with a
     host-and-time message in the foreground (milliseconds), then hands the network half
     (fetch, rebase onto upstream, push) to a detached copy of itself in its own process
@@ -64,7 +70,9 @@ my own machine-level tooling rather than shared lab config.
     for a human. Always exit 0.
   - Both write one line per step to `~/.claude/dotfiles-sync.log` (`$CLAUDE_DOTFILES_SYNC_LOG`):
     `pull up to date at <sha>` / `pull pulled a..b`, `push committed <sha>; pushing detached`,
-    `push detached: pushed <sha>` or the reason it did not. That log is how to check the hooks run.
+    `push detached: pushed <sha>` or the reason it did not, `link <dir>: merged into the repo
+    copy` / `link <dir>: <entry> differs from the repo copy, left for a human`. That log is
+    how to check the hooks run.
   Prereqs on each machine: the dotfiles cloned with a pushable remote (SSH key for
   GitHub), a git identity, bash (3.2 is enough) and git. The `.gitignore`
   line `claude/.claude/projects/**/*.jsonl` in the dotfiles keeps session transcripts out

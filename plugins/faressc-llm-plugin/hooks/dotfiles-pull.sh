@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook: fast-forward the dotfiles checkout so the plan files and the
 # per-project memory that the `claude` stow package syncs are current before the
-# session reads them, then link the memory directories (dotfiles-link-memory.sh).
+# session reads them, then link the plans and memory directories (dotfiles-link.sh).
 # Never fails a session: every problem is one line on stderr and exit 0. Prints one
 # line (which SessionStart adds to the context) only when something new arrived.
 #
@@ -32,5 +32,5 @@ else
         note "up to date at ${after:0:7}"
     fi
 fi
-"$hooks/dotfiles-link-memory.sh"
+"$hooks/dotfiles-link.sh"
 exit 0
