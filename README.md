@@ -25,7 +25,8 @@ my own machine-level tooling rather than shared lab config.
     (`api.githubcopilot.com/mcp/`), one per fine-grained token: a fine-grained token
     reaches the repositories of a single owner only (the anira-project organisation,
     `GITHUB_TOKEN_ANIRA`; the tanh-lab organisation, `GITHUB_TOKEN_TANH`; my own
-    account, `GITHUB_TOKEN`). The `?variant=` only keeps the three URLs apart.
+    account, `GITHUB_TOKEN_FARESSC`). The `?variant=` only keeps the three URLs apart.
+    `GITHUB_TOKEN` is not read here: it belongs to tanh-tools' `github` server.
     `github-faressc` also loads the `actions` toolset (`X-MCP-Toolsets`: the default
     `context,repos,issues,pull_requests,users` plus `actions`): GitHub does not let
     fine-grained tokens call the Checks API on private repositories (check runs answer
