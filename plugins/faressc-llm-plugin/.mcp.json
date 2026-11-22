@@ -21,6 +21,14 @@
       "headers": {
         "Authorization": "Bearer ${GITHUB_TOKEN_TANH}"
       }
+    },
+    "github-faressc": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/?variant=faressc",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}",
+        "X-MCP-Toolsets": "context,repos,issues,pull_requests,users,actions"
+      }
     }
   }
 }
