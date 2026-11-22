@@ -12,14 +12,16 @@
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/?variant=anira",
       "headers": {
-        "Authorization": "Bearer ${GITHUB_TOKEN_ANIRA}"
+        "Authorization": "Bearer ${GITHUB_TOKEN_ANIRA}",
+        "X-MCP-Toolsets": "context,repos,issues,pull_requests,users,actions"
       }
     },
     "github-tanh": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/?variant=tanh",
       "headers": {
-        "Authorization": "Bearer ${GITHUB_TOKEN_TANH}"
+        "Authorization": "Bearer ${GITHUB_TOKEN_TANH}",
+        "X-MCP-Toolsets": "context,repos,issues,pull_requests,users,actions"
       }
     },
     "github-faressc": {
