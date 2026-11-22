@@ -10,7 +10,7 @@ my own machine-level tooling rather than shared lab config.
 
 ## What's in `faressc-llm-plugin`
 
-- **`.mcp.json`** — two stdio MCP servers, declared once and version-controlled
+- **`.mcp.json`** — the MCP servers, declared once and version-controlled
   instead of bootstrapped imperatively via `claude mcp add`:
   - `zotero` — local Zotero API (`ZOTERO_LOCAL=true`), needs Zotero running with
     *Settings → Advanced → "Allow other applications…"* enabled.
@@ -21,6 +21,17 @@ my own machine-level tooling rather than shared lab config.
     udev rule, the `ydotoold` user service, and `computer-use-linux setup` for
     AT-SPI. Full setup guide:
     `~/tubcloud.tu-berlin.de/memory-bridge/guides/computer-use-linux-mcp.md`.
+  - `github-anira`, `github-tanh`, `github-faressc` — GitHub's remote MCP server
+    (`api.githubcopilot.com/mcp/`), one per fine-grained token: a fine-grained token
+    reaches the repositories of a single owner only (the anira-project organisation,
+    `GITHUB_TOKEN_ANIRA`; the tanh-lab organisation, `GITHUB_TOKEN_TANH`; my own
+    account, `GITHUB_TOKEN`). The `?variant=` only keeps the three URLs apart.
+    `github-faressc` also loads the `actions` toolset (`X-MCP-Toolsets`: the default
+    `context,repos,issues,pull_requests,users` plus `actions`): GitHub does not let
+    fine-grained tokens call the Checks API on private repositories (check runs answer
+    403; public ones are readable with any token), so CI on a private repository is
+    followed through workflow runs, jobs and job logs, which need the token's
+    *Actions: read*.
 - **`skills/control-fares-linux-computer`** — how to drive this machine through the
   `computer-use-linux` MCP (Ctrl/Super are swapped at the xkb level, Hyprland
   keybinds, monitor layout).
