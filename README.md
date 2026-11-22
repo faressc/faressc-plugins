@@ -27,7 +27,7 @@ my own machine-level tooling rather than shared lab config.
     `GITHUB_TOKEN_ANIRA`; the tanh-lab organisation, `GITHUB_TOKEN_TANH`; my own
     account, `GITHUB_TOKEN_FARESSC`). The `?variant=` only keeps the three URLs apart.
     `GITHUB_TOKEN` is not read here: it belongs to tanh-tools' `github` server.
-    `github-faressc` also loads the `actions` toolset (`X-MCP-Toolsets`: the default
+    All three also load the `actions` toolset (`X-MCP-Toolsets`: the default
     `context,repos,issues,pull_requests,users` plus `actions`): GitHub does not let
     fine-grained tokens call the Checks API on private repositories (check runs answer
     403; public ones are readable with any token), so CI on a private repository is
