@@ -15,7 +15,7 @@ Fetch the issue with `issue_read` (`get`) and state its title.
 
 - It has a parent (`get_parent`): **feature mode**. The parent's sub-issues (`get_sub_issues`), in their order, are the chain, and the run ends with the given issue.
 - It has sub-issues itself: it is the parent. **Feature mode**, and the run covers the whole chain.
-- Neither: **standalone mode**, the last section.
+- Neither: **standalone mode**, the last section. An issue labelled `needs-tickets` is not implemented this way: stop and tell the user to type `/to-tickets <number>`, which splits it first.
 
 ## 2. Find where to go on (feature mode)
 

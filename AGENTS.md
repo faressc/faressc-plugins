@@ -71,7 +71,9 @@ left out.
 - `engineering/triage` is adapted; `OUT-OF-SCOPE.md` is byte-identical, `AGENT-BRIEF.md` differs in one
   example that named a `gh` command. In `SKILL.md`: `pr-flow` is called first; GitHub is reached
   through the MCP, with the tools named at each step (no `setup-matt-pocock-skills`, no tracker
-  config); the role names are the label names, looked up and never created; an external PR is
+  config); the role names are the label names, looked up and never created; the state
+  `needs-triage` is dropped (an issue without a state role is untriaged) and `needs-tickets` is
+  added for a request that needs splitting before it is implemented; an external PR is
   one whose author is not the user; the code of an outside author's PR is not run without asking
   the user; a note for `.out-of-scope/` reaches the repo through a pull request of its own; after
   `ready-for-agent` it names `/implement` or `/to-tickets` as the next step. Upstream's disclaimer
@@ -82,8 +84,9 @@ left out.
   called first for the repo facts and the glossary; the tickets form one linear chain with
   at most one blocker each, and a slice is sized as one sitting to review; the parent issue
   is created first, then the sub-issues in order with `parent_issue_number` (an existing
-  issue passed as argument becomes the parent and gets the decisions as a comment); labels
-  are looked up, never created; a plan of one slice becomes a standalone issue; no
+  issue passed as argument becomes the parent and gets the decisions as a comment); the
+  parent carries `ready-for-agent`, and an existing one loses `needs-tickets`; labels are
+  looked up, never created; a plan of one slice becomes a standalone issue; no
   prototype-snippet exception.
 - `engineering/issue-review` is upstream's `code-review`, renamed to stay clear of Claude
   Code's built-in `/code-review`, and adapted: the fixed point is the pull request's base;

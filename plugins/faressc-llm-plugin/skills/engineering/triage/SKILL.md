@@ -35,11 +35,13 @@ Two **category** roles:
 
 Five **state** roles:
 
-- `needs-triage`: maintainer needs to evaluate
 - `needs-info`: waiting on reporter for more information
+- `needs-tickets`: fully specified, but more than one pull request; `/to-tickets` splits it
 - `ready-for-agent`: fully specified, ready for an AFK agent
 - `ready-for-human`: needs human implementation
 - `wontfix`: will not be actioned
+
+An issue without a state role has not been triaged, whatever other labels it carries. There is no role for "being evaluated".
 
 For a PR, the same states read against the attached code: `ready-for-agent` means a brief is attached and an agent should take the next step on the diff; `ready-for-human` means it's ready for a human to merge.
 
@@ -47,7 +49,7 @@ Every triaged issue should carry exactly one category role and one state role. I
 
 The role names are the label names. Look a label up with `get_label` before you apply it, and do not create labels: if the repo lacks one you need, name it and ask the user to create it.
 
-State transitions: an unlabeled issue normally goes to `needs-triage` first; from there it moves to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer can override at any time; flag transitions that look unusual and ask before proceeding.
+State transitions: an issue without a state role moves to `needs-info`, `needs-tickets`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` is evaluated again once the reporter replies, and `needs-tickets` ends when `/to-tickets` has split the issue. The maintainer can override at any time; flag transitions that look unusual and ask before proceeding.
 
 ## Invocation
 
@@ -60,11 +62,11 @@ The maintainer invokes `/triage` and describes what they want in natural languag
 
 ## Show what needs attention
 
-Query the issue tracker (`search_issues` with `repo:<owner>/<repo> is:open` and `no:label`, `label:needs-triage` or `label:needs-info`; `issue_read` with `get_comments` for what happened since the last triage notes) and present three buckets, oldest first:
+Query the issue tracker and present three buckets, oldest first:
 
-1. **Unlabeled**: never triaged.
-2. **`needs-triage`**: evaluation in progress.
-3. **`needs-info` with reporter activity since the last triage notes**: needs re-evaluation.
+1. **No state role**: never triaged, or looked at and left undecided. `search_issues` with `repo:<owner>/<repo> is:open -label:needs-info -label:needs-tickets -label:ready-for-agent -label:ready-for-human -label:wontfix`.
+2. **`needs-info` with reporter activity since the last triage notes**: needs re-evaluation. `search_issues` with `label:needs-info`, then `issue_read` with `get_comments` for what happened since the notes.
+3. **`needs-tickets`**: specified, and waiting for the user to type `/to-tickets <number>`.
 
 When PRs are in scope, include external PRs in these buckets and tag each line `[PR]` or `[issue]`. Discovery surfaces only *external* PRs (a PR whose author is not the user, `get_me`, unless the "Agent workflow" section of the repo's `AGENTS.md` names who counts as external), so a collaborator's in-flight PR is not triage work. This filter is discovery-only; an explicitly named PR is always triaged regardless of author.
 
@@ -81,16 +83,17 @@ Show counts and a one-line summary per item. Let the maintainer pick.
 4. **Grill (if needed).** If the request needs fleshing out, call the Skill tool twice, for "grilling" and "domain-modeling" (Claude Code lists them as "faressc-llm-plugin:grilling" and "faressc-llm-plugin:domain-modeling"), and grill it into shape a round of questions at a time, sharpening domain terms and updating `GLOSSARY.md`/ADRs inline as decisions land.
 
 5. **Apply the outcome.** Roles are set with `issue_write` (`method: "update"`, the whole label list; a PR takes the same call with its number), comments are posted with `add_issue_comment`, and an issue is closed with `issue_write` (`state: "closed"`, `state_reason: "not_planned"`), a PR with `update_pull_request` (`state: "closed"`):
-   - `ready-for-agent`: post an agent brief comment ([AGENT-BRIEF.md](AGENT-BRIEF.md)).
+   - `ready-for-agent`: the request is one pull request. Post an agent brief comment ([AGENT-BRIEF.md](AGENT-BRIEF.md)).
+   - `needs-tickets`: the request is clear, but more than one pull request. Post an agent brief for the whole of it; `/to-tickets` works from it.
    - `ready-for-human`: same structure as an agent brief, but note why it can't be delegated (judgment calls, external access, design decisions, manual testing).
    - `needs-info`: post triage notes (template below).
    - For `wontfix`, close the issue, with the comment depending on *why*:
      - **Already implemented**: the change already exists in the codebase. Point to where it lives; do **not** write to `.out-of-scope/` (that KB is for *rejected* requests, not built ones).
      - **Rejected (bug)**: give a polite explanation, then close.
      - **Rejected (enhancement)**: write to `.out-of-scope/`, link to it from a comment, then close ([OUT-OF-SCOPE.md](OUT-OF-SCOPE.md)). The file reaches the repo through a pull request of its own, by pr-flow's rules for a standalone change (branch `docs/out-of-scope-<concept>`, a draft PR the user merges); the comment links the file in that PR.
-   - `needs-triage`: apply the role. Optional comment if there's partial progress.
+   - Undecided: leave it without a state role. Post triage notes if there is partial progress, so the next session does not start over.
 
-   After `ready-for-agent`, tell the user what to type next, since this skill cannot start it: `/implement <number>` for an issue that is one pull request, `/to-tickets <number>` for one that needs splitting (it becomes the parent issue).
+   Then tell the user what to type next, since this skill cannot start it: `/implement <number>` after `ready-for-agent`, `/to-tickets <number>` after `needs-tickets` (it splits the issue and makes it the parent).
 
 ## Quick state override
 

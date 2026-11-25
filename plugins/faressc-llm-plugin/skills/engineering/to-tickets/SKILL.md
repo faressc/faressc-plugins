@@ -67,10 +67,11 @@ Iterate until the user approves the breakdown. Nothing is created on GitHub befo
 Publish the approved breakdown with `issue_write` (`method: "create"`), in this order:
 
 1. **Labels.** Look up every label you are about to use with `get_label`; do not create labels. If a ticket is to carry `ready-for-human` and the repo has no such label, ask the user before publishing anything: that label is what stops `/implement` from taking the issue. Leave off any other label the repo does not have and name it in your final message.
-2. **The parent.** Its title names the feature as a request, its body follows the parent template below, its label is `bug` or `enhancement`. Do NOT close or modify an existing parent issue: post the decisions as one comment on it with `add_issue_comment`.
+2. **The parent.** Its title names the feature as a request, its body follows the parent template below, its labels are `bug` or `enhancement`, and `ready-for-agent`: `/implement` on a parent runs its chain. Do NOT close an existing parent issue or change its text: post the decisions as one comment on it with `add_issue_comment`.
 3. **The sub-issues**, in chain order (blockers first), so each "Blocked by" can reference a real issue number. Create each with `parent_issue_number` set to the parent, its labels, and the body from the issue template below. If the order under the parent comes out wrong (`issue_read`, `get_sub_issues`), correct it with `sub_issue_write` (`reprioritize`). It works with issue IDs, not issue numbers: `sub_issue_id`, `after_id` and `before_id` are the `id` fields that `issue_read` (`get`, `get_sub_issues`) returns.
+4. **An existing parent's state.** Once its sub-issues exist, set its state to `ready-for-agent` with `issue_write` (`method: "update"`, the whole label list). That takes `needs-tickets` off it, where `/triage` put it there.
 
-A standalone issue is one `issue_write` call without `parent_issue_number` and without the "Blocked by" section. If the user passed an existing issue and the plan is one ticket, create nothing: that issue is the standalone issue.
+A standalone issue is one `issue_write` call without `parent_issue_number` and without the "Blocked by" section. If the user passed an existing issue and the plan is one ticket, create nothing: that issue is the standalone issue, and a `needs-tickets` on it becomes `ready-for-agent`.
 
 <parent-template>
 
