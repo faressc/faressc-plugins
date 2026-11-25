@@ -1,8 +1,14 @@
 {
   "name": "faressc-llm-plugin",
-  "version": "0.4.10",
-  "description": "Fares's personal Claude Code tooling: Zotero, Linux computer-use, the anira-project / tanh-lab / faressc GitHub MCP servers, the control-fares-linux-computer skill, and the session hooks that sync ~/.claude plans and memory through the dotfiles repo",
+  "version": "0.5.0",
+  "description": "Fares's personal Claude Code tooling: Zotero, Linux computer-use, the anira-project / tanh-lab / faressc GitHub MCP servers, skills split into user-invoked and model-invoked (control-fares-linux-computer, explain-pr, grill-me / grilling), and the session hooks that sync ~/.claude plans and memory through the dotfiles repo",
   "author": {
     "name": "Fares Schulz"
-  }
+  },
+  "skills": [
+    "./skills/engineering/explain-pr",
+    "./skills/machine/control-fares-linux-computer",
+    "./skills/productivity/grill-me",
+    "./skills/productivity/grilling"
+  ]
 }

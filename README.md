@@ -6,7 +6,7 @@ my own machine-level tooling rather than shared lab config.
 
 | Plugin | Provides |
 |---|---|
-| [`faressc-llm-plugin`](plugins/faressc-llm-plugin/) | MCP servers (Zotero, `computer-use-linux`, GitHub) + the `control-fares-linux-computer` skill + the dotfiles sync hooks |
+| [`faressc-llm-plugin`](plugins/faressc-llm-plugin/) | MCP servers (Zotero, `computer-use-linux`, GitHub) + user-invoked and model-invoked skills + the dotfiles sync hooks |
 
 ## What's in `faressc-llm-plugin`
 
@@ -33,9 +33,29 @@ my own machine-level tooling rather than shared lab config.
     403; public ones are readable with any token), so CI on a private repository is
     followed through workflow runs, jobs and job logs, which need the token's
     *Actions: read*.
-- **`skills/control-fares-linux-computer`** — how to drive this machine through the
-  `computer-use-linux` MCP (Ctrl/Super are swapped at the xkb level, Hyprland
-  keybinds, monitor layout).
+- **`skills/`** — skills in bucket folders (`engineering/`, `machine/`,
+  `productivity/`), laid out like [mattpocock/skills](https://github.com/mattpocock/skills).
+  Claude Code scans `skills/` only one level deep, so each skill is listed in
+  `.claude-plugin/plugin.json`'s `skills` array. They split on who can invoke them
+  (conventions in [`CLAUDE.md`](CLAUDE.md)):
+  - **User-invoked** (`disable-model-invocation: true`, reachable only by typing them; they
+    orchestrate):
+    - [`grill-me`](plugins/faressc-llm-plugin/skills/productivity/grill-me/SKILL.md) —
+      get relentlessly interviewed about a plan or design; hands off to `grilling`.
+    - [`explain-pr`](plugins/faressc-llm-plugin/skills/engineering/explain-pr/SKILL.md) —
+      explain a branch or PR in plain language and in execution order.
+  - **Model-invoked** (the model reaches for them when the task fits; they hold the
+    reusable discipline):
+    - [`grilling`](plugins/faressc-llm-plugin/skills/productivity/grilling/SKILL.md) —
+      the interview itself: rounds of numbered questions over the design tree's frontier,
+      each with a recommended answer, until nothing is left silently assumed.
+    - [`control-fares-linux-computer`](plugins/faressc-llm-plugin/skills/machine/control-fares-linux-computer/SKILL.md)
+      — how to drive this machine through the `computer-use-linux` MCP (Ctrl/Super are
+      swapped at the xkb level, Hyprland keybinds, monitor layout).
+
+  `grill-me` and `grilling` are vendored from mattpocock/skills (MIT, commit `d6539114`),
+  each with the upstream `LICENSE` beside its `SKILL.md`. opencode gets the same skills
+  through the dotfiles' `claude-bridge`, which has to follow the `skills` array too.
 
 - **`hooks/`** — two session hooks that keep `~/.claude/plans` and every
   `~/.claude/projects/<key>/memory` in sync between machines through the dotfiles repo
