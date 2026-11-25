@@ -37,7 +37,7 @@ my own machine-level tooling rather than shared lab config.
   `productivity/`), laid out like [mattpocock/skills](https://github.com/mattpocock/skills).
   Claude Code scans `skills/` only one level deep, so each skill is listed in
   `.claude-plugin/plugin.json`'s `skills` array. They split on who can invoke them
-  (conventions in [`CLAUDE.md`](CLAUDE.md)):
+  (conventions in [`AGENTS.md`](AGENTS.md)):
   - **User-invoked** (`disable-model-invocation: true`, reachable only by typing them; they
     orchestrate):
     - [`grill-me`](plugins/faressc-llm-plugin/skills/productivity/grill-me/SKILL.md) —

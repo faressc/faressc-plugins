@@ -1,4 +1,7 @@
-# faressc-plugins
+# AGENTS.md — faressc-plugins
+
+Guidance for coding agents working on this repo. Claude Code (v2.1.277+, as long as no
+`CLAUDE.md` sits here or above) and opencode both read this file natively.
 
 ## Skills
 
