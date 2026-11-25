@@ -6,7 +6,7 @@ General workflow tools, not code-specific.
 
 Reachable only when you type them (`disable-model-invocation: true`).
 
-- **[grill-me](./grill-me/SKILL.md)**: get relentlessly interviewed about a plan or design until every branch of the design tree is resolved. Hands off to `grilling`.
+- **[grill-me](./grill-me/SKILL.md)**: get relentlessly interviewed about a plan or design until every branch of the design tree is resolved. Hands off to `grilling`. `grill-with-docs` in the engineering bucket is the variant that also writes the glossary and ADRs as it goes.
 
 ## Model-invoked
 

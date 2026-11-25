@@ -43,13 +43,54 @@ user-invoked skill, tell the user to run `/name` instead.
 Bucket `README.md`s and the top-level `README.md` group skills under **User-invoked** and
 **Model-invoked**.
 
+### GitHub in skills
+
+A skill reaches GitHub only through the GitHub MCP server of the repository's owner
+(`github-faressc`, `github-anira`, `github-tanh`), never through `gh`. It names the tools
+without the server prefix (`issue_write`, `merge_pull_request`, ...), because the server
+differs per repo, and takes the server, the default branch and the local check commands
+from the "Agent workflow" section of the repo it works in (template:
+`skills/engineering/pr-flow/AGENT-WORKFLOW-SECTION.md`). `pr-flow` is the single place for
+the rules of the issue / sub-PR / big-PR workflow; `implement` and `to-tickets` call it
+instead of repeating them.
+
 ### Vendored skills
 
-`productivity/grill-me` and `productivity/grilling` come from mattpocock/skills (MIT,
-commit `d6539114`). Each keeps the upstream `LICENSE` beside its `SKILL.md`. `grilling`
-is byte-identical to upstream; `grill-me` only adds the plugin-namespaced name Claude Code
-lists `grilling` under. To update, copy the upstream files over, re-apply that one
-change, and record the new commit here and in the READMEs.
+Eight skills come from mattpocock/skills (MIT, commit `d6539114`). Each keeps the upstream
+`LICENSE` beside its `SKILL.md`, adapted or not; upstream's `agents/openai.yaml` files are
+left out.
+
+- Byte-identical to upstream: `productivity/grilling`, `engineering/diagnosing-bugs` (with
+  `scripts/hitl-loop.template.sh`) and `engineering/domain-modeling` (with `ADR-FORMAT.md`
+  and `GLOSSARY-FORMAT.md`).
+- `productivity/grill-me` and `engineering/grill-with-docs` only add the plugin-namespaced
+  names Claude Code lists the called skills under.
+- `engineering/retro` is adapted: step 1 (calling `writing-for-agents`, which is not
+  vendored) is removed and the steps renumbered, the sentence pointing to that skill under
+  "Files" is removed, and one parenthesis names `issue-review` as the review agent.
+- `engineering/to-tickets` is adapted: GitHub issues through the MCP are the only tracker
+  (no `setup-matt-pocock-skills`, no local-file variant, no `.scratch`), and `pr-flow` is
+  called first for the repo facts and the glossary; the tickets form one linear chain with
+  at most one blocker each, and a slice is sized as one sitting to review; the parent issue
+  is created first, then the sub-issues in order with `parent_issue_number` (an existing
+  issue passed as argument becomes the parent and gets the decisions as a comment); labels
+  are looked up, never created; a plan of one slice becomes a standalone issue; no
+  prototype-snippet exception.
+- `engineering/issue-review` is upstream's `code-review`, renamed to stay clear of Claude
+  Code's built-in `/code-review`, and adapted: the fixed point is the pull request's base;
+  the spec is the PR's issue, fetched through the MCP; the glossary and the ADRs of the
+  area are standards sources; new behaviour without a test is a hard finding on the
+  Standards axis; findings carry `path/from/repo/root.ext:123` references and are marked
+  hard or judgement call. The smell baseline is upstream's, unchanged.
+
+`engineering/implement` and `engineering/pr-flow` are written here (ideas from upstream's
+`implement` and `implement-spec`, no copied text), so they carry no `LICENSE`. The
+"Glossary and decisions" section of `pr-flow` is the reading side of `domain-modeling`,
+adapted from upstream's `setup-matt-pocock-skills/domain.md`; other skills point to it
+instead of repeating it.
+
+To update a vendored skill, copy the upstream files over, re-apply the changes listed
+above, and record the new commit here and in the READMEs.
 
 ## Checks
 
@@ -62,3 +103,9 @@ claude plugin validate plugins/faressc-llm-plugin --strict   # "Provides:" lists
 
 The plugin-directory findings it prints (no LICENSE, icon or privacy URL) are about
 submitting to the public catalog and do not fail the run.
+
+No skill may shell out to `gh`; this finds nothing:
+
+```sh
+grep -rn -E '\bgh (pr|issue|api|run|label)\b' plugins/
+```
