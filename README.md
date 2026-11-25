@@ -45,6 +45,10 @@ my own machine-level tooling rather than shared lab config.
     - [`grill-with-docs`](plugins/faressc-llm-plugin/skills/engineering/grill-with-docs/SKILL.md) —
       the same interview, which also writes the glossary and ADRs as it goes; hands off to
       `grilling` and `domain-modeling`.
+    - [`triage`](plugins/faressc-llm-plugin/skills/engineering/triage/SKILL.md) —
+      move issues and outside pull requests you did not plan through the triage states:
+      check the claim, grill if needed, then label it and post an agent brief, questions
+      for the reporter, or the reason it is closed.
     - [`to-tickets`](plugins/faressc-llm-plugin/skills/engineering/to-tickets/SKILL.md) —
       break a plan into GitHub issues in order, a parent issue and its sub-issues, published
       once you approved the split.
@@ -80,16 +84,17 @@ my own machine-level tooling rather than shared lab config.
       — how to drive this machine through the `computer-use-linux` MCP (Ctrl/Super are
       swapped at the xkb level, Hyprland keybinds, monitor layout).
 
-  The issue workflow in one line: `/grill-me` or `/grill-with-docs`, `/to-tickets`,
+  The issue workflow in one line: `/triage` for an issue that came in, or `/grill-me` or
+  `/grill-with-docs` for a plan, then `/to-tickets`,
   `/implement <issue number>`, then review on the feature branch with `/explain-pr <sub-PR
   number>`, and `/retro` after a run. Its skills reach GitHub only through the MCP server of
   the repository's owner, never through `gh`.
 
-  `grill-me`, `grilling`, `grill-with-docs`, `domain-modeling`, `to-tickets`,
+  `grill-me`, `grilling`, `grill-with-docs`, `domain-modeling`, `triage`, `to-tickets`,
   `issue-review`, `diagnosing-bugs` and `retro` are vendored from mattpocock/skills (MIT,
-  commit `d6539114`), each with the upstream `LICENSE` beside its `SKILL.md`; `to-tickets`,
-  `issue-review` (upstream `code-review`) and `retro` are adapted, the list of changes is
-  in [`AGENTS.md`](AGENTS.md). opencode gets the same skills through the dotfiles'
+  commit `d6539114`), each with the upstream `LICENSE` beside its `SKILL.md`; `triage`,
+  `to-tickets`, `issue-review` (upstream `code-review`) and `retro` are adapted, the list
+  of changes is in [`AGENTS.md`](AGENTS.md). opencode gets the same skills through the dotfiles'
   `claude-bridge`, which has to follow the `skills` array too.
 
 - **`hooks/`** — two session hooks that keep `~/.claude/plans` and every

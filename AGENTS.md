@@ -56,7 +56,7 @@ instead of repeating them.
 
 ### Vendored skills
 
-Eight skills come from mattpocock/skills (MIT, commit `d6539114`). Each keeps the upstream
+Nine skills come from mattpocock/skills (MIT, commit `d6539114`). Each keeps the upstream
 `LICENSE` beside its `SKILL.md`, adapted or not; upstream's `agents/openai.yaml` files are
 left out.
 
@@ -68,6 +68,15 @@ left out.
 - `engineering/retro` is adapted: step 1 (calling `writing-for-agents`, which is not
   vendored) is removed and the steps renumbered, the sentence pointing to that skill under
   "Files" is removed, and one parenthesis names `issue-review` as the review agent.
+- `engineering/triage` is adapted; `OUT-OF-SCOPE.md` is byte-identical, `AGENT-BRIEF.md` differs in one
+  example that named a `gh` command. In `SKILL.md`: `pr-flow` is called first; GitHub is reached
+  through the MCP, with the tools named at each step (no `setup-matt-pocock-skills`, no tracker
+  config); the role names are the label names, looked up and never created; an external PR is
+  one whose author is not the user; the code of an outside author's PR is not run without asking
+  the user; a note for `.out-of-scope/` reaches the repo through a pull request of its own; after
+  `ready-for-agent` it names `/implement` or `/to-tickets` as the next step. Upstream's disclaimer
+  on every posted comment is kept, as the one exception to `pr-flow`'s rule against attribution
+  lines.
 - `engineering/to-tickets` is adapted: GitHub issues through the MCP are the only tracker
   (no `setup-matt-pocock-skills`, no local-file variant, no `.scratch`), and `pr-flow` is
   called first for the repo facts and the glossary; the tickets form one linear chain with

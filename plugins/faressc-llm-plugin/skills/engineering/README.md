@@ -7,6 +7,7 @@ Daily code work.
 Reachable only when you type them (`disable-model-invocation: true`).
 
 - **[grill-with-docs](./grill-with-docs/SKILL.md)**: the `grill-me` interview, which also writes the glossary and ADRs as it goes. Hands off to `grilling` and `domain-modeling`.
+- **[triage](./triage/SKILL.md)**: move issues and outside pull requests you did not plan through the triage states: check the claim against the code, grill if needed, then label it and post an agent brief, questions for the reporter, or the reason it is closed. Rejected features are recorded under `.out-of-scope/`.
 - **[to-tickets](./to-tickets/SKILL.md)**: break a plan into GitHub issues in order, a parent issue and its sub-issues, published once you approved the split.
 - **[implement](./implement/SKILL.md)**: implement a feature's issues in order, up to and including the one you name, each as a reviewed and merged sub-PR into the feature branch; or one standalone issue as a draft PR. Follows `pr-flow`, reviews with `issue-review`, takes bugs through `diagnosing-bugs`.
 - **[explain-pr](./explain-pr/SKILL.md)**: explain what the current branch or PR changes, in plain language and in execution order, with code references.
@@ -21,6 +22,6 @@ Model- or user-reachable (rich trigger phrasing so the model can reach for them)
 - **[diagnosing-bugs](./diagnosing-bugs/SKILL.md)**: diagnosis loop for hard bugs and performance regressions: no fix before one command reproduces the bug.
 - **[domain-modeling](./domain-modeling/SKILL.md)**: build and sharpen the project's domain model: challenge terms, and write `GLOSSARY.md` and ADRs (`docs/adr/`) the moment a term or a decision is settled.
 
-The flow: `/grill-me` or `/grill-with-docs`, then `/to-tickets`, then `/implement <issue number>`, then review on the feature branch with `/explain-pr <sub-PR number>`, and `/retro` after a run.
+The flow: `/triage` for an issue that came in, or `/grill-me` or `/grill-with-docs` for a plan, then `/to-tickets`, then `/implement <issue number>`, then review on the feature branch with `/explain-pr <sub-PR number>`, and `/retro` after a run.
 
-All of these except `explain-pr`, `implement` and `pr-flow` come from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, commit `d6539114`); each keeps the upstream `LICENSE` beside its `SKILL.md`. `diagnosing-bugs` and `domain-modeling` are unchanged; `grill-with-docs` only adds the plugin-namespaced skill names; `to-tickets`, `issue-review` (upstream `code-review`) and `retro` are adapted, the changes are listed in the repo's `AGENTS.md`. None of the skills here calls `gh`.
+All of these except `explain-pr`, `implement` and `pr-flow` come from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT, commit `d6539114`); each keeps the upstream `LICENSE` beside its `SKILL.md`. `diagnosing-bugs` and `domain-modeling` are unchanged; `grill-with-docs` only adds the plugin-namespaced skill names; `triage`, `to-tickets`, `issue-review` (upstream `code-review`) and `retro` are adapted, the changes are listed in the repo's `AGENTS.md`. None of the skills here calls `gh`.

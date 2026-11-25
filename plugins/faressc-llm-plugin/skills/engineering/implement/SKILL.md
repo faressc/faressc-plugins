@@ -35,7 +35,7 @@ The work list is the chain's issues that are not done, from the first one up to 
 Take the work list in order. Finish all nine steps for one issue before the next one starts.
 
 1. **Check that it is yours.** Stop the run at an issue labelled `ready-for-human`, or at one whose `Blocked by #N` names an issue that is not done. Only issues that are not done are in the work list, so one the user has finished never stops the run.
-2. **Read it**: body and comments. The acceptance criteria are what the sub-PR has to meet.
+2. **Read it**: body and comments. The acceptance criteria are what the sub-PR has to meet. Where the issue went through `/triage`, its newest "Agent Brief" comment is the specification and overrides the original body.
 3. **Branch** from the tip of the feature branch.
 4. **Implement** the issue the way you normally would, with tests for the new code and one commit per specific change. An issue labelled `bug` always gets a test that fails without the fix. When its cause is not evident from the report, or the bug does not reproduce at the first attempt, call the Skill tool with "diagnosing-bugs" (Claude Code lists it as "faressc-llm-plugin:diagnosing-bugs") before changing code.
 5. **Run the local checks**, push, and open the sub-PR.
@@ -63,7 +63,7 @@ After the last merge, follow the big PR's CI runs for that push. Fix failures as
 
 One issue, one draft PR against the default branch, which you never merge and never mark ready:
 
-1. Read the issue and its comments. Stop if it is labelled `ready-for-human`.
+1. Read the issue and its comments; the newest "Agent Brief" comment, where `/triage` posted one, is the specification. Stop if it is labelled `ready-for-human`.
 2. Branch from `origin/<default>`, implement as in step 4 above, run the local checks, push, and open the draft PR with `Closes #N`.
 3. Review as in step 6 above; the fixed point is the default branch.
 4. Follow the PR's CI runs and fix failures as new commits, three rounds at most.
