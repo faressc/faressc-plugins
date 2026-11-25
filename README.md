@@ -6,7 +6,7 @@ my own machine-level tooling rather than shared lab config.
 
 | Plugin | Provides |
 |---|---|
-| [`faressc-llm-plugin`](plugins/faressc-llm-plugin/) | MCP servers (Zotero, `computer-use-linux`, GitHub) + the `control-fares-linux-computer` skill + the dotfiles sync hooks |
+| [`faressc-llm-plugin`](plugins/faressc-llm-plugin/) | MCP servers (Zotero, `computer-use-linux`, GitHub) + user-invoked and model-invoked skills + the dotfiles sync hooks |
 
 ## What's in `faressc-llm-plugin`
 
@@ -33,9 +33,69 @@ my own machine-level tooling rather than shared lab config.
     403; public ones are readable with any token), so CI on a private repository is
     followed through workflow runs, jobs and job logs, which need the token's
     *Actions: read*.
-- **`skills/control-fares-linux-computer`** — how to drive this machine through the
-  `computer-use-linux` MCP (Ctrl/Super are swapped at the xkb level, Hyprland
-  keybinds, monitor layout).
+- **`skills/`** — skills in bucket folders (`engineering/`, `machine/`,
+  `productivity/`), laid out like [mattpocock/skills](https://github.com/mattpocock/skills).
+  Claude Code scans `skills/` only one level deep, so each skill is listed in
+  `.claude-plugin/plugin.json`'s `skills` array. They split on who can invoke them
+  (conventions in [`AGENTS.md`](AGENTS.md)):
+  - **User-invoked** (`disable-model-invocation: true`, reachable only by typing them; they
+    orchestrate):
+    - [`grill-me`](plugins/faressc-llm-plugin/skills/productivity/grill-me/SKILL.md) —
+      get relentlessly interviewed about a plan or design; hands off to `grilling`.
+    - [`grill-with-docs`](plugins/faressc-llm-plugin/skills/engineering/grill-with-docs/SKILL.md) —
+      the same interview, which also writes the glossary and ADRs as it goes; hands off to
+      `grilling` and `domain-modeling`.
+    - [`triage`](plugins/faressc-llm-plugin/skills/engineering/triage/SKILL.md) —
+      move issues and outside pull requests you did not plan through the triage states:
+      check the claim, grill if needed, then label it and post an agent brief, questions
+      for the reporter, or the reason it is closed.
+    - [`to-tickets`](plugins/faressc-llm-plugin/skills/engineering/to-tickets/SKILL.md) —
+      break a plan into GitHub issues in order, a parent issue and its sub-issues, published
+      once you approved the split.
+    - [`implement`](plugins/faressc-llm-plugin/skills/engineering/implement/SKILL.md) —
+      implement a feature's issues in order, up to and including the one you name, each as
+      a reviewed and merged sub-PR into the feature branch; or one standalone issue as a
+      draft PR.
+    - [`explain-pr`](plugins/faressc-llm-plugin/skills/engineering/explain-pr/SKILL.md) —
+      explain a branch, PR or sub-PR in plain language and in execution order.
+    - [`retro`](plugins/faressc-llm-plugin/skills/engineering/retro/SKILL.md) —
+      a retrospective on a coding session: candidates for improving the agent's environment,
+      presented to you; it edits nothing by itself.
+  - **Model-invoked** (the model reaches for them when the task fits; they hold the
+    reusable discipline):
+    - [`grilling`](plugins/faressc-llm-plugin/skills/productivity/grilling/SKILL.md) —
+      the interview itself: rounds of numbered questions over the design tree's frontier,
+      each with a recommended answer, until nothing is left silently assumed.
+    - [`pr-flow`](plugins/faressc-llm-plugin/skills/engineering/pr-flow/SKILL.md) —
+      the rules for issue and pull-request work: one big PR per feature against the default
+      branch, one sub-PR per issue into the feature branch (merged by the agent with a merge
+      commit), the ledger in the big PR's description, commits, tests, the CI decision, and
+      the glossary and ADRs to read first. Repo facts come from an "Agent workflow" section
+      in the repo's `AGENTS.md`.
+    - [`issue-review`](plugins/faressc-llm-plugin/skills/engineering/issue-review/SKILL.md) —
+      reviews one pull request against its base in two parallel sub-agents: the repo's
+      standards (and missing tests), and the issue it implements.
+    - [`diagnosing-bugs`](plugins/faressc-llm-plugin/skills/engineering/diagnosing-bugs/SKILL.md) —
+      diagnosis loop for hard bugs: no fix before one command reproduces the bug.
+    - [`domain-modeling`](plugins/faressc-llm-plugin/skills/engineering/domain-modeling/SKILL.md) —
+      builds and sharpens the domain model: challenges terms, and writes `GLOSSARY.md` and
+      ADRs (`docs/adr/`) the moment a term or a decision is settled.
+    - [`control-fares-linux-computer`](plugins/faressc-llm-plugin/skills/machine/control-fares-linux-computer/SKILL.md)
+      — how to drive this machine through the `computer-use-linux` MCP (Ctrl/Super are
+      swapped at the xkb level, Hyprland keybinds, monitor layout).
+
+  The issue workflow in one line: `/triage` for an issue that came in, or `/grill-me` or
+  `/grill-with-docs` for a plan, then `/to-tickets`,
+  `/implement <issue number>`, then review on the feature branch with `/explain-pr <sub-PR
+  number>`, and `/retro` after a run. Its skills reach GitHub only through the MCP server of
+  the repository's owner, never through `gh`.
+
+  `grill-me`, `grilling`, `grill-with-docs`, `domain-modeling`, `triage`, `to-tickets`,
+  `issue-review`, `diagnosing-bugs` and `retro` are vendored from mattpocock/skills (MIT,
+  commit `d6539114`), each with the upstream `LICENSE` beside its `SKILL.md`; `triage`,
+  `to-tickets`, `issue-review` (upstream `code-review`) and `retro` are adapted, the list
+  of changes is in [`AGENTS.md`](AGENTS.md). opencode gets the same skills through the dotfiles'
+  `claude-bridge`, which has to follow the `skills` array too.
 
 - **`hooks/`** — two session hooks that keep `~/.claude/plans` and every
   `~/.claude/projects/<key>/memory` in sync between machines through the dotfiles repo
