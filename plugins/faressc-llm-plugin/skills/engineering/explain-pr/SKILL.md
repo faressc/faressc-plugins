@@ -9,8 +9,8 @@ Explain the changes on this branch (or PR $ARGUMENTS if given) so I fully unders
 
 ## Gather context
 
-- If a PR number is given: `gh pr view $ARGUMENTS` and `gh pr diff $ARGUMENTS`.
-- Otherwise find the base (`gh pr view` for the current branch, else main/master) and use `git log --oneline <base>..HEAD` and `git diff <base>...HEAD`.
+- If a PR number is given (a sub-PR's number works the same): read the PR and its base with `pull_request_read` (`get`) on the GitHub MCP server of the repository's owner, `git fetch origin`, and use `git log --oneline origin/<base>..origin/<head>` and `git diff origin/<base>...origin/<head>`. For a sub-PR that is already merged, use its merge commit instead (its `merge_commit_sha` from `pull_request_read`): `git log --oneline <merge>^1..<merge>^2` and `git diff <merge>^1 <merge>`.
+- Otherwise find the base (`list_pull_requests` filtered by `head`, written `<owner>:<branch>`, for the current branch, else main/master), `git fetch origin`, and use `git log --oneline origin/<base>..HEAD` and `git diff origin/<base>...HEAD`.
 - Read the full changed files and the callers/callees you need, not only the diff hunks.
 
 ## Output, in this order
@@ -23,5 +23,6 @@ Explain the changes on this branch (or PR $ARGUMENTS if given) so I fully unders
    - where it helps, add a concrete example: sample input and the resulting output or state, a before/after of the behaviour, or a short usage snippet of a new API. Skip it when the step is already obvious.
 3. **Things outside the main path.** Config, build system, tests, docs, and refactors that don't change behaviour.
 4. **Risks and open questions.** Anything that looks suspicious, untested, or inconsistent with the PR description or commit messages.
+5. **Diffview command.** End with the command that opens exactly what you explained: `:DiffviewOpen <merge>^1..<merge>` for a merged sub-PR, otherwise `:DiffviewOpen origin/<base>...HEAD` (`origin/<base>...origin/<head>` when the PR's branch is not checked out), with the real names and SHAs filled in.
 
 Be detailed. Read the code before explaining it and never guess what a function does.
